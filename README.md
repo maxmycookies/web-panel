@@ -15,3 +15,8 @@
 🎯 User-Friendly – Easy-to-use, even for beginners!
 
 💥 Perfect for developers, analysts, & security researchers! 💡
+
+https://t.me/newtonpmta0
+https://t.me/newtonpmta
+
+Contact Me: @MAX1N3WT0N on Telegram.

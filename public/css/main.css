@@ -1,0 +1,207 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Montserrat', Arial, Helvetica, sans-serif;
+    text-decoration: none;
+    margin: 0;
+    padding: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+body {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* 🌟 Header Section */
+.header {
+    height: 180px;
+    width: 100%;
+    background-image: 
+        linear-gradient(to right bottom, rgba(255, 102, 48, 0.6), rgba(30, 108, 217, 0.9)),
+        url('/img/evilginx3.jpeg');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    filter: drop-shadow(2px 4px 6px black);
+    text-align: center;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.header img {
+    width: 160px;
+    height: auto;
+    margin-bottom: 10px;
+    filter: drop-shadow(2px 2px 5px rgba(0, 0, 0, 0.4));
+}
+
+.header h1 {
+    font-size: 2.4rem;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+    font-weight: bold;
+}
+
+/* 🌟 Session Table */
+.session {
+    width: 95%;
+    max-width: 1200px;
+    margin: 30px auto;
+    overflow-x: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 🌟 Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #222;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+td {
+    background-color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* 🌟 Alternating Row Colors */
+tr:nth-child(even) {
+    background: #f8f8f8;
+}
+
+/* 🌟 Hover Effects */
+tr:hover {
+    background-color: rgba(255, 102, 48, 0.15);
+}
+
+/* 🌟 Table Scrollbar */
+.session::-webkit-scrollbar {
+    height: 8px;
+}
+
+.session::-webkit-scrollbar-track {
+    background: #33ff00;
+}
+
+.session::-webkit-scrollbar-thumb {
+    background: rgba(30, 108, 217, 0.6);
+    border-radius: 10px;
+}
+
+.session::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 108, 217, 0.8);
+}
+
+/* 🌟 Buttons */
+button {
+    background: linear-gradient(120deg, orangered, red);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    margin-bottom: 5px; /* Add spacing for vertical stacking */
+}
+
+button:hover {
+    background: linear-gradient(120deg, red, orangered);
+    transform: scale(1.05);
+}
+
+/* 🌟 Copy Button Variants */
+.copy-button {
+    background: red;
+}
+
+.copy-button:hover {
+    background: #2e8b57;
+}
+
+.copy-all {
+    background: #1e6cd9;
+}
+
+.copy-all:hover {
+    background: #154ea3;
+}
+
+/* 🌟 Responsive Design */
+@media (max-width: 768px) {
+    .header {
+        height: 150px;
+        padding: 10px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+
+    th, td {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+
+    button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+/* 🌟 Dark Mode (Auto Toggle) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #f0f0f0;
+    }
+
+    .session {
+        background: #1e1e1e;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    th {
+        background: #333;
+    }
+
+    td {
+        background: #1e1e1e;
+    }
+
+    tr:nth-child(even) {
+        background: #2a2a2a;
+    }
+
+    button {
+        background: linear-gradient(120deg, #ff5733, #c70039);
+    }
+
+    button:hover {
+        background: linear-gradient(120deg, #c70039, #ff5733);
+    }
+}

